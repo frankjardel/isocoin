@@ -1,0 +1,92 @@
+#!/sbin/openrc-run
+
+# backward compatibility for existing gentoo layout 
+#
+if [ -d "/var/lib/isocoin/.isocoin" ]; then
+	ISOCOIND_DEFAULT_DATADIR="/var/lib/isocoin/.isocoin"
+else
+	ISOCOIND_DEFAULT_DATADIR="/var/lib/isocoind"
+fi
+
+ISOCOIND_CONFIGFILE=${ISOCOIND_CONFIGFILE:-/etc/isocoin/isocoin.conf}
+ISOCOIND_PIDDIR=${ISOCOIND_PIDDIR:-/var/run/isocoind}
+ISOCOIND_PIDFILE=${ISOCOIND_PIDFILE:-${ISOCOIND_PIDDIR}/isocoind.pid}
+ISOCOIND_DATADIR=${ISOCOIND_DATADIR:-${ISOCOIND_DEFAULT_DATADIR}}
+ISOCOIND_USER=${ISOCOIND_USER:-${ISOCOIN_USER:-isocoin}}
+ISOCOIND_GROUP=${ISOCOIND_GROUP:-isocoin}
+ISOCOIND_BIN=${ISOCOIND_BIN:-/usr/bin/isocoind}
+ISOCOIND_NICE=${ISOCOIND_NICE:-${NICELEVEL:-0}}
+ISOCOIND_OPTS="${ISOCOIND_OPTS:-${ISOCOIN_OPTS}}"
+
+name="Isocoin Core Daemon"
+description="Isocoin cryptocurrency P2P network daemon"
+
+command="/usr/bin/isocoind"
+command_args="-pid=\"${ISOCOIND_PIDFILE}\" \
+		-conf=\"${ISOCOIND_CONFIGFILE}\" \
+		-datadir=\"${ISOCOIND_DATADIR}\" \
+		-daemon \
+		${ISOCOIND_OPTS}"
+
+required_files="${ISOCOIND_CONFIGFILE}"
+start_stop_daemon_args="-u ${ISOCOIND_USER} \
+			-N ${ISOCOIND_NICE} -w 2000"
+pidfile="${ISOCOIND_PIDFILE}"
+
+# The retry schedule to use when stopping the daemon. Could be either
+# a timeout in seconds or multiple signal/timeout pairs (like
+# "SIGKILL/180 SIGTERM/300")
+retry="${ISOCOIND_SIGTERM_TIMEOUT}"
+
+depend() {
+	need localmount net
+}
+
+# verify
+# 1) that the datadir exists and is writable (or create it)
+# 2) that a directory for the pid exists and is writable
+# 3) ownership and permissions on the config file
+start_pre() {
+	checkpath \
+	-d \
+	--mode 0750 \
+	--owner "${ISOCOIND_USER}:${ISOCOIND_GROUP}" \
+	"${ISOCOIND_DATADIR}"
+
+	checkpath \
+	-d \
+	--mode 0755 \
+	--owner "${ISOCOIND_USER}:${ISOCOIND_GROUP}" \
+	"${ISOCOIND_PIDDIR}"
+
+	checkpath -f \
+	-o ${ISOCOIND_USER}:${ISOCOIND_GROUP} \
+	-m 0660 \
+	${ISOCOIND_CONFIGFILE}
+
+	checkconfig || return 1
+}
+
+checkconfig()
+{
+	if ! grep -qs '^rpcpassword=' "${ISOCOIND_CONFIGFILE}" ; then
+		eerror ""
+		eerror "ERROR: You must set a secure rpcpassword to run isocoind."
+		eerror "The setting must appear in ${ISOCOIND_CONFIGFILE}"
+		eerror ""
+		eerror "This password is security critical to securing wallets "
+		eerror "and must not be the same as the rpcuser setting."
+		eerror "You can generate a suitable random password using the following "
+		eerror "command from the shell:"
+		eerror ""
+		eerror "bash -c 'tr -dc a-zA-Z0-9 < /dev/urandom | head -c32 && echo'"
+		eerror ""
+		eerror "It is recommended that you also set alertnotify so you are "
+		eerror "notified of problems:"
+		eerror ""
+		eerror "ie: alertnotify=echo %%s | mail -s \"Isocoin Alert\"" \
+			"admin@foo.com"
+		eerror ""
+		return 1
+	fi
+}

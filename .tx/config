@@ -1,0 +1,7 @@
+[main]
+host = https://www.transifex.com
+
+[isocoin.qt-translation-017x]
+file_filter = src/qt/locale/isocoin_<lang>.ts
+source_file = src/qt/locale/isocoin_en.ts
+source_lang = en

@@ -1,0 +1,33 @@
+# /etc/conf.d/isocoind: config file for /etc/init.d/isocoind
+
+# Config file location
+#ISOCOIND_CONFIGFILE="/etc/isocoin/isocoin.conf"
+
+# What directory to write pidfile to?  (created and owned by $ISOCOIND_USER)
+#ISOCOIND_PIDDIR="/var/run/isocoind"
+
+# What filename to give the pidfile
+#ISOCOIND_PIDFILE="${ISOCOIND_PIDDIR}/isocoind.pid"
+
+# Where to write isocoind data (be mindful that the blockchain is large)
+#ISOCOIND_DATADIR="/var/lib/isocoind"
+
+# User and group to own isocoind process
+#ISOCOIND_USER="isocoin"
+#ISOCOIND_GROUP="isocoin"
+
+# Path to isocoind executable
+#ISOCOIND_BIN="/usr/bin/isocoind"
+
+# Nice value to run isocoind under
+#ISOCOIND_NICE=0
+
+# Additional options (avoid -conf and -datadir, use flags above)
+#ISOCOIND_OPTS=""
+
+# The timeout in seconds OpenRC will wait for isocoind to terminate
+# after a SIGTERM has been raised.
+# Note that this will be mapped as argument to start-stop-daemon's
+# '--retry' option, which means you can specify a retry schedule
+# here. For more information see man 8 start-stop-daemon.
+ISOCOIND_SIGTERM_TIMEOUT=60
